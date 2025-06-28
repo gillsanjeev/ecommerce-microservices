@@ -11,3 +11,4 @@ steps:
       terraform apply -auto-approve -var="project_id=$(gcloud secrets versions access latest --secret=tf-project-id)" \
                       -var="project_number=$(gcloud secrets versions access latest --secret=tf-project-number)"
 
+
