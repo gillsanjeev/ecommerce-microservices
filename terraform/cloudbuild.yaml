@@ -1,0 +1,13 @@
+steps:
+- name: 'hashicorp/terraform:1.6.6'
+  entrypoint: 'sh'
+  args:
+    - -c
+    - |
+      apk add --no-cache curl git bash
+      terraform init
+      terraform plan -var="project_id=$(gcloud secrets versions access latest --secret=tf-project-id)" \
+                     -var="project_number=$(gcloud secrets versions access latest --secret=tf-project-number)"
+      terraform apply -auto-approve -var="project_id=$(gcloud secrets versions access latest --secret=tf-project-id)" \
+                      -var="project_number=$(gcloud secrets versions access latest --secret=tf-project-number)"
+
