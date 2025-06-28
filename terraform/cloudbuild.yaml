@@ -12,4 +12,7 @@ steps:
                       -var="project_number=$(gcloud secrets versions access latest --secret=tf-project-number)"
 
 
-
+options:
+  logging: CLOUD_LOGGING_ONLY
+  # Or, use a different bucket:
+  # logsBucket: 'gs://your-logs-bucket'
