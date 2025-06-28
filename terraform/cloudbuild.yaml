@@ -1,18 +1,37 @@
 steps:
-- name: 'hashicorp/terraform:1.6.6'
-  entrypoint: 'sh'
-  args:
-    - -c
-    - |
-      apk add --no-cache curl git bash
-      terraform init
-      terraform plan -var="project_id=$(gcloud secrets versions access latest --secret=tf-project-id)" \
-                     -var="project_number=$(gcloud secrets versions access latest --secret=tf-project-number)"
-      terraform apply -auto-approve -var="project_id=$(gcloud secrets versions access latest --secret=tf-project-id)" \
-                      -var="project_number=$(gcloud secrets versions access latest --secret=tf-project-number)"
+  # Step 1: Install Terraform into Cloud SDK image
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'Install Terraform'
+    entrypoint: 'sh'
+    args:
+      - -c
+      - |
+        apt-get update && apt-get install -y unzip curl bash
+        curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip -o terraform.zip
+        unzip terraform.zip
+        mv terraform /usr/local/bin/
+        terraform version
 
+  # Step 2: Run Terraform from terraform/ directory
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'Terraform Init & Apply'
+    dir: 'terraform'
+    entrypoint: 'sh'
+    args:
+      - -c
+      - |
+        apt-get update && apt-get install -y unzip curl bash
+        curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip -o terraform.zip
+        unzip terraform.zip
+        mv terraform /usr/local/bin/
+        
+        project_id=$(gcloud secrets versions access latest --secret=tf-project-id)
+        project_number=$(gcloud secrets versions access latest --secret=tf-project-number)
+
+        terraform init
+        terraform plan -var="project_id=$project_id" -var="project_number=$project_number"
+        terraform apply -auto-approve -var="project_id=$project_id" -var="project_number=$project_number"
 
 options:
   logging: CLOUD_LOGGING_ONLY
-  # Or, use a different bucket:
-  # logsBucket: 'gs://your-logs-bucket'
+
