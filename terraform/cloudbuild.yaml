@@ -1,5 +1,5 @@
 steps:
-  # Step 1: Install Terraform once and make it reusable in next steps
+  # Step 1: Install Terraform into Cloud SDK image
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: 'Install Terraform'
     entrypoint: 'sh'
@@ -7,33 +7,31 @@ steps:
       - -c
       - |
         apt-get update && apt-get install -y unzip curl bash
-        rm -rf terraform  # Remove directory if it exists
+        rm -rf terraform
         curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip -o terraform.zip
         unzip -o terraform.zip
         chmod +x terraform
         mv terraform /usr/local/bin/
         terraform version
 
-  # Step 2: Run Terraform commands from terraform/ directory
+  # Step 2: Run Terraform Init & Apply in root directory
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: 'Terraform Init & Apply'
-    dir: 'terraform'
     entrypoint: 'sh'
     args:
       - -c
       - |
-        # Install Terraform again (shared cache not preserved between steps in cloud-sdk image)
         apt-get update && apt-get install -y unzip curl bash
+        rm -rf terraform
         curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip -o terraform.zip
         unzip -o terraform.zip
         chmod +x terraform
         mv terraform /usr/local/bin/
 
-        # Fetch project secrets
+        # Fetch secrets
         project_id=$(gcloud secrets versions access latest --secret=tf-project-id)
         project_number=$(gcloud secrets versions access latest --secret=tf-project-number)
 
-        # Terraform workflow
         terraform init -input=false
         terraform plan -input=false -var="project_id=$project_id" -var="project_number=$project_number" -out=tfplan
         terraform apply -input=false -auto-approve tfplan
