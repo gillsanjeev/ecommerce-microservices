@@ -2,6 +2,14 @@
 # - GKE Autopilot Cluster
 # - Artifact Registry (Docker)
 
+terraform {
+  backend "gcs" {
+    bucket = "project-cloudbuild-logs"
+    prefix = "terraform/state"
+  }
+}
+
+
 provider "google" {
   project = var.project_id
   region  = var.region
