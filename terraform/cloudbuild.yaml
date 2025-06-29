@@ -1,5 +1,5 @@
 steps:
-  # Step 1: Install Terraform into Cloud SDK image
+  # Step 1: Install Terraform
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: 'Install Terraform'
     entrypoint: 'sh'
@@ -7,14 +7,13 @@ steps:
       - -c
       - |
         apt-get update && apt-get install -y unzip curl bash
-        rm -rf terraform
         curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip -o terraform.zip
         unzip -o terraform.zip
         chmod +x terraform
         mv terraform /usr/local/bin/
         terraform version
 
-  # Step 2: Run Terraform Init & Apply in root directory
+  # Step 2: Terraform Init & Apply
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: 'Terraform Init & Apply'
     entrypoint: 'sh'
@@ -22,13 +21,11 @@ steps:
       - -c
       - |
         apt-get update && apt-get install -y unzip curl bash
-        rm -rf terraform
         curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip -o terraform.zip
         unzip -o terraform.zip
         chmod +x terraform
         mv terraform /usr/local/bin/
 
-        # Fetch secrets
         project_id=$(gcloud secrets versions access latest --secret=tf-project-id)
         project_number=$(gcloud secrets versions access latest --secret=tf-project-number)
 
@@ -47,38 +44,26 @@ steps:
           --region=us-central1 \
           --project=fine-proxy-464003-q4
 
-  # Step 4: Deploy Orders Microservice
+  # Step 4: Deploy Orders Microservice using Helm
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: 'Deploy Orders Microservice'
     dir: helm/orders
-    entrypoint: 'bash'
+    entrypoint: 'sh'
     args:
       - '-c'
       - |
-        curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        apt-get update && apt-get install -y curl bash unzip gnupg software-properties-common lsb-release apt-transport-https
+        # Install Helm
+        curl -fsSL -o helm.tar.gz https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz
+        tar -zxvf helm.tar.gz
+        mv linux-amd64/helm /usr/local/bin/helm
+        chmod +x /usr/local/bin/helm
+
+        # Install gke-gcloud-auth-plugin
+        apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+
+        helm version
         helm upgrade --install orders . --namespace default --create-namespace
-
-  # Step 5: Deploy Payments Microservice
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    id: 'Deploy Payments Microservice'
-    dir: helm/payments
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-        helm upgrade --install payments . --namespace default --create-namespace
-
-  # Step 6: Deploy Users Microservice
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    id: 'Deploy Users Microservice'
-    dir: helm/users
-    entrypoint: 'bash'
-    args:
-      - '-c'
-      - |
-        curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-        helm upgrade --install users . --namespace default --create-namespace
 
 options:
   logging: CLOUD_LOGGING_ONLY
