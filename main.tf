@@ -68,3 +68,5 @@ output "gke_cluster_name" {
 output "artifact_registry_url" {
   value = google_artifact_registry_repository.ecommerce_repo.id
 }
+
+

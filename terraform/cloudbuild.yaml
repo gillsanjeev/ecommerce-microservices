@@ -39,3 +39,21 @@ steps:
 options:
   logging: CLOUD_LOGGING_ONLY
 
+
+
+
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  id: Authenticate to GKE
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      gcloud container clusters get-credentials ecommerce-cluster \
+        --region=us-central1 \
+        --project=fine-proxy-464003-q4
+
+- name: 'alpine/helm:3.14.0'
+  id: Deploy Orders Microservice
+  dir: helm/orders
+  args: ['upgrade', '--install', 'orders', '.', '--namespace', 'default', '--create-namespace']
+
