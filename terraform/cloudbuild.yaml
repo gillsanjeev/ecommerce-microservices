@@ -47,11 +47,38 @@ steps:
           --region=us-central1 \
           --project=fine-proxy-464003-q4
 
-  # Step 4: Deploy Orders Microservice via Helm
-  - name: 'alpine/helm:3.14.0'
+  # Step 4: Deploy Orders Microservice
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
     id: 'Deploy Orders Microservice'
     dir: helm/orders
-    args: ['upgrade', '--install', 'orders', '.', '--namespace', 'default', '--create-namespace']
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        helm upgrade --install orders . --namespace default --create-namespace
+
+  # Step 5: Deploy Payments Microservice
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'Deploy Payments Microservice'
+    dir: helm/payments
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        helm upgrade --install payments . --namespace default --create-namespace
+
+  # Step 6: Deploy Users Microservice
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: 'Deploy Users Microservice'
+    dir: helm/users
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        helm upgrade --install users . --namespace default --create-namespace
 
 options:
   logging: CLOUD_LOGGING_ONLY
